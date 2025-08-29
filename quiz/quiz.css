@@ -1,0 +1,36 @@
+/* quiz/quiz.css */
+body {
+    background-color: #f0f2f5;
+}
+
+.quiz-card {
+    width: 95%;
+    max-width: 800px;
+    min-height: 400px;
+}
+
+/* Styles for the lettered options */
+.option-label {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+}
+
+.option-letter {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    background-color: #f8f9fa;
+}
+
+.option-label input:checked ~ .option-letter {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Quiz Maker</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+        h2 { margin-bottom: 20px; color: #333; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .toggle-form { margin-top: 15px; color: #007bff; cursor: pointer; }
+        #error-message { color: red; margin-top: 10px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div id="login-form">
+            <h2>Admin Login</h2>
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button id="login-btn">Login</button>
+            <p class="toggle-form" onclick="toggleForms()">No account? Sign Up</p>
+        </div>
+        <div id="signup-form" style="display:none;">
+            <h2>Admin Sign Up</h2>
+            <input type="email" id="signup-email" placeholder="Email" required>
+            <input type="password" id="signup-password" placeholder="Password" required>
+            <button id="signup-btn">Sign Up</button>
+            <p class="toggle-form" onclick="toggleForms()">Already have an account? Login</p>
+        </div>
+        <p id="error-message"></p>
+    </div>
+    <script type="module">
+        import { auth } from './assets/js/firebase-config.js';
+        import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        onAuthStateChanged(auth, (user) => { if (user) { window.location.href = 'dashboard/index.html'; } });
+        window.toggleForms = () => {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const isLoginVisible = loginForm.style.display !== 'none';
+            loginForm.style.display = isLoginVisible ? 'none' : 'block';
+            signupForm.style.display = isLoginVisible ? 'block' : 'none';
+            document.getElementById('error-message').textContent = '';
+        }
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            signInWithEmailAndPassword(auth, email, password).catch((error) => { document.getElementById('error-message').textContent = error.message; });
+        });
+        document.getElementById('signup-btn').addEventListener('click', () => {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            createUserWithEmailAndPassword(auth, email, password).catch((error) => { document.getElementById('error-message').textContent = error.message; });
+        });
+    </script>
+</body>
+</html>
