@@ -13,7 +13,7 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('user-email').textContent = user.email;
         loadQuizzes(user.uid);
     } else {
-        // --- PATH FIX FOR GITHUB PAGES ---
+        // --- PATH FIX PARA SA GITHUB PAGES ---
         window.location.href = '/mc-quiz-maker/index.html';
     }
 });
@@ -127,10 +127,10 @@ function loadQuizzes(uid) {
         quizList.innerHTML = '';
         if (querySnapshot.empty) { quizList.innerHTML = '<p class="text-center text-muted">No quizzes created yet.</p>'; return; }
         querySnapshot.forEach((doc) => {
-            const quiz = doc.data();
-            const quizId = doc.id;
+            const quiz = doc.data(); 
+            const quizId = doc.id; 
             
-            // --- URL GENERATION FIX ---
+            // --- ITO ANG IDINAGDAG NA AYOS PARA SA URL ---
             const baseUrl = `${window.location.origin}/mc-quiz-maker`;
             const quizUrl = `${baseUrl}/quiz/index.html?id=${quizId}`;
             
@@ -166,8 +166,11 @@ document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
 document.getElementById('add-question-btn').addEventListener('click', () => { addQuestionBlock(); });
 document.getElementById('timer-type').addEventListener('change', (e) => { const timerInputContainer = document.getElementById('timer-input-container'); const timerUnitLabel = document.getElementById('timer-unit-label'); if (e.target.value === 'none') { timerInputContainer.style.display = 'none'; } else { timerInputContainer.style.display = 'block'; timerUnitLabel.textContent = (e.target.value === 'per-item') ? 'Seconds' : 'Minutes'; } });
 document.getElementById('import-json-btn').addEventListener('click', () => {
-    const jsonInput = document.getElementById('json-input').value; if (!jsonInput) { Swal.fire('Empty Input', 'Please paste your JSON data.', 'warning'); return; }
-    let questions; try { questions = JSON.parse(jsonInput); } catch (error) { Swal.fire({ title: 'Invalid JSON Syntax', text: 'Please check your format.', icon: 'error' }); return; }
+    const jsonInput = document.getElementById('json-input').value;
+    if (!jsonInput) { Swal.fire('Empty Input', 'Please paste your JSON data.', 'warning'); return; }
+    let questions;
+    try { questions = JSON.parse(jsonInput); } 
+    catch (error) { Swal.fire({ title: 'Invalid JSON Syntax', text: 'Please check your format.', icon: 'error' }); return; }
     if (!Array.isArray(questions)) { Swal.fire('Wrong Data Structure', 'The JSON must be an array `[...]`.', 'error'); return; }
     Swal.fire({ title: 'Please wait...', text: 'Validating and generating your quiz format.', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
     setTimeout(() => {
@@ -184,7 +187,8 @@ document.getElementById('import-json-btn').addEventListener('click', () => {
             if (errors.length > 0) { invalidItems.push({ itemNumber: index + 1, reasons: errors.join(' ') }); } 
             else { validQuestions.push(item); }
         });
-        questionsContainer.innerHTML = ''; questionCounter = 0;
+        questionsContainer.innerHTML = '';
+        questionCounter = 0;
         validQuestions.forEach(q => addQuestionBlock(q));
         renumberQuestions();
         let summaryText = `<b>${validQuestions.length} questions were imported successfully.</b>`;
@@ -195,11 +199,17 @@ document.getElementById('import-json-btn').addEventListener('click', () => {
 
 document.getElementById('save-quiz-btn').addEventListener('click', async () => {
     document.querySelectorAll('.card.card-body').forEach(b => b.style.border = '1px solid #ddd');
-    const questionBlocks = document.querySelectorAll('.card.card-body.bg-light.mb-3'); const incompleteQuestions = [];
+    const questionBlocks = document.querySelectorAll('.card.card-body.bg-light.mb-3');
+    const incompleteQuestions = [];
     questionBlocks.forEach((block) => {
-        const questionNumber = block.dataset.questionNumber; const questionTitle = block.querySelector('.question-title').value;
-        const options = Array.from(block.querySelectorAll('.option-text')).map(input => input.value); const correctAnswerNode = block.querySelector(`input[type="radio"]:checked`);
-        if (!questionTitle.trim() || options.some(opt => !opt.trim()) || !correctAnswerNode) { incompleteQuestions.push(questionNumber); block.style.border = '2px solid red'; }
+        const questionNumber = block.dataset.questionNumber;
+        const questionTitle = block.querySelector('.question-title').value;
+        const options = Array.from(block.querySelectorAll('.option-text')).map(input => input.value);
+        const correctAnswerNode = block.querySelector(`input[type="radio"]:checked`);
+        if (!questionTitle.trim() || options.some(opt => !opt.trim()) || !correctAnswerNode) {
+            incompleteQuestions.push(questionNumber);
+            block.style.border = '2px solid red';
+        }
     });
     if (incompleteQuestions.length > 0) {
         const firstErrorBlock = document.querySelector(`[data-question-number="${incompleteQuestions[0]}"]`);
@@ -208,7 +218,8 @@ document.getElementById('save-quiz-btn').addEventListener('click', async () => {
         return;
     }
     const quizTitle = document.getElementById('quiz-title').value;
-    const timerType = document.getElementById('timer-type').value; const timerValue = parseInt(document.getElementById('timer-value').value);
+    const timerType = document.getElementById('timer-type').value;
+    const timerValue = parseInt(document.getElementById('timer-value').value);
     if (!quizTitle) { Swal.fire('Oops...', 'Please enter a quiz title.', 'warning'); return; }
     if (timerType !== 'none' && (!timerValue || timerValue <= 0)) { Swal.fire('Oops...', 'Please enter a valid number greater than 0 for the timer.', 'warning'); return; }
     const quizData = { title: quizTitle, createdBy: currentUser.uid, settings: { timerType: timerType, timerValue: timerValue || 0, pointsPerItem: parseInt(document.getElementById('points-per-item').value) || 1 }, questions: [] };
@@ -218,27 +229,46 @@ document.getElementById('save-quiz-btn').addEventListener('click', async () => {
     });
     try {
         if (currentEditQuizId) {
-            quizData.updatedAt = serverTimestamp(); const quizRef = doc(db, "quizzes", currentEditQuizId);
-            await updateDoc(quizRef, quizData); Swal.fire('Success!', 'Quiz updated successfully.', 'success'); resetForm();
+            quizData.updatedAt = serverTimestamp();
+            const quizRef = doc(db, "quizzes", currentEditQuizId);
+            await updateDoc(quizRef, quizData);
+            Swal.fire('Success!', 'Quiz updated successfully.', 'success');
+            resetForm();
         } else {
             quizData.createdAt = serverTimestamp();
             const docRef = await addDoc(collection(db, "quizzes"), quizData);
             
-            // --- URL GENERATION FIX ---
+            // --- ITO ANG IDINAGDAG NA AYOS PARA SA URL ---
             const baseUrl = `${window.location.origin}/mc-quiz-maker`;
             const quizUrl = `${baseUrl}/quiz/index.html?id=${docRef.id}`;
             
             Swal.fire({
-                title: 'Quiz Saved!', icon: 'success',
-                html: `<p>Your quiz link has been generated successfully.</p><div class="input-group mt-3"><input type="text" class="form-control" value="${quizUrl}" id="swal-quiz-link" readonly><button class="btn btn-outline-primary" id="swal-copy-btn"><i class="ri-clipboard-line"></i> Copy</button></div>`,
-                showConfirmButton: true, confirmButtonText: 'Create Another Quiz',
+                title: 'Quiz Saved!',
+                icon: 'success',
+                html: `
+                    <p>Your quiz link has been generated successfully.</p>
+                    <div class="input-group mt-3">
+                        <input type="text" class="form-control" value="${quizUrl}" id="swal-quiz-link" readonly>
+                        <button class="btn btn-outline-primary" id="swal-copy-btn"><i class="ri-clipboard-line"></i> Copy</button>
+                    </div>`,
+                showConfirmButton: true,
+                confirmButtonText: 'Create Another Quiz',
                 didOpen: () => {
-                    const copyBtn = document.getElementById('swal-copy-btn'); const linkInput = document.getElementById('swal-quiz-link');
-                    copyBtn.addEventListener('click', () => { linkInput.select(); navigator.clipboard.writeText(linkInput.value); copyBtn.textContent = 'Copied!'; });
+                    const copyBtn = document.getElementById('swal-copy-btn');
+                    const linkInput = document.getElementById('swal-quiz-link');
+                    copyBtn.addEventListener('click', () => {
+                        linkInput.select();
+                        navigator.clipboard.writeText(linkInput.value);
+                        copyBtn.textContent = 'Copied!';
+                    });
                 }
-            }).then((result) => { if (result.isConfirmed || result.isDismissed) { resetForm(); } });
+            }).then((result) => {
+                if (result.isConfirmed || result.isDismissed) {
+                    resetForm();
+                }
+            });
         }
-    } catch (e) { console.error("Error saving document: ", e); Swal.fire('Error', 'Failed to save quiz. Check console for details.', 'error'); }
+    } catch (e) { console.error("Error saving document: ", e); Swal.fire('Error', 'Failed to save quiz. Check aconsole for details.', 'error'); }
 });
 
 document.getElementById('copy-link-btn').addEventListener('click', () => { const quizLinkInput = document.getElementById('quiz-link'); navigator.clipboard.writeText(quizLinkInput.value).then(() => { Swal.fire({ title: 'Copied!', icon: 'success', timer: 1500, showConfirmButton: false }); }); });
