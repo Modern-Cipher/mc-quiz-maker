@@ -3,7 +3,6 @@
 import { db } from '../assets/js/firebase-config.js';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- DOM Elements ---
 const loadingState = document.getElementById('loading-state');
 const studentInfoForm = document.getElementById('student-info-form');
 const quizProper = document.getElementById('quiz-proper');
@@ -15,30 +14,22 @@ const questionText = document.getElementById('question-text');
 const optionsContainer = document.getElementById('options-container');
 const nextBtn = document.getElementById('next-btn');
 
-// --- Quiz State ---
 let quizId = null;
 let quizData = null;
 let studentInfo = {};
 let studentAnswers = [];
 let currentQuestionIndex = 0;
 let score = 0;
-
-// --- FIX: SEPARATE TIMER INTERVALS ---
 let itemTimerInterval = null;
 let totalTimerInterval = null;
 
-
-// --- NEW: REFRESH HANDLING - Warn user before they leave ---
 window.addEventListener('beforeunload', (event) => {
-    // Show prompt only if the quiz section is visible
     if (quizProper.style.display === 'block') {
         event.preventDefault();
-        event.returnValue = ''; // Required for legacy browsers
+        event.returnValue = '';
     }
 });
 
-
-// --- Initialization ---
 window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     quizId = urlParams.get('id');
@@ -56,7 +47,6 @@ window.onload = async () => {
             quizData = quizSnap.data();
             quizTitleHeader.textContent = quizData.title;
 
-            // --- NEW: REFRESH HANDLING - Check for saved progress ---
             const savedState = sessionStorage.getItem('quizState_' + quizId);
             if (savedState) {
                 Swal.fire({
@@ -80,7 +70,6 @@ window.onload = async () => {
                 loadingState.style.display = 'none';
                 studentInfoForm.style.display = 'block';
             }
-
         } else {
             loadingState.innerHTML = '<h1 class="h3 text-danger">Error: Quiz Not Found</h1>';
         }
@@ -101,10 +90,7 @@ nextBtn.addEventListener('click', handleNextQuestion);
 function startQuiz() {
     studentInfoForm.style.display = 'none';
     quizProper.style.display = 'block';
-
-    // --- NEW: REFRESH HANDLING - Save initial state ---
     saveProgress();
-
     if (quizData.settings.timerType === 'total' && quizData.settings.timerValue > 0) {
         const endTime = Date.now() + quizData.settings.timerValue * 60 * 1000;
         sessionStorage.setItem('timerEndTime_' + quizId, endTime);
@@ -113,12 +99,10 @@ function startQuiz() {
     displayQuestion(currentQuestionIndex);
 }
 
-// --- NEW: Function to resume a quiz from saved state ---
 function resumeQuiz(savedState) {
     studentInfo = savedState.studentInfo;
     studentAnswers = savedState.studentAnswers;
     currentQuestionIndex = savedState.currentQuestionIndex;
-
     loadingState.style.display = 'none';
     quizProper.style.display = 'block';
 
@@ -128,14 +112,14 @@ function resumeQuiz(savedState) {
         if (remainingSeconds > 0) {
             startTotalTimer(remainingSeconds);
         } else {
-            submitQuiz(); // Time is up if they refresh after timer ended
+            submitQuiz();
         }
     }
     displayQuestion(currentQuestionIndex);
 }
 
 function displayQuestion(index) {
-    if (itemTimerInterval) clearInterval(itemTimerInterval); // Clear only item timer
+    if (itemTimerInterval) clearInterval(itemTimerInterval);
     
     const question = quizData.questions[index];
     const letters = ['A', 'B', 'C', 'D'];
@@ -187,9 +171,7 @@ function handleNextQuestion() {
     const selectedOption = document.querySelector(`input[name="question${currentQuestionIndex}"]:checked`);
     studentAnswers[currentQuestionIndex] = selectedOption ? parseInt(selectedOption.value) : null;
     currentQuestionIndex++;
-    
-    saveProgress(); // Save progress after every answer
-
+    saveProgress();
     if (currentQuestionIndex < quizData.questions.length) {
         displayQuestion(currentQuestionIndex);
     } else {
@@ -197,7 +179,6 @@ function handleNextQuestion() {
     }
 }
 
-// --- NEW: Function to save progress to sessionStorage ---
 function saveProgress() {
     const state = {
         studentInfo: studentInfo,
@@ -207,13 +188,10 @@ function saveProgress() {
     sessionStorage.setItem('quizState_' + quizId, JSON.stringify(state));
 }
 
-
 async function submitQuiz() {
-    // Clear all timers and intervals
     if (itemTimerInterval) clearInterval(itemTimerInterval);
     if (totalTimerInterval) clearInterval(totalTimerInterval);
 
-    // Clear saved progress from session storage
     sessionStorage.removeItem('quizState_' + quizId);
     sessionStorage.removeItem('timerEndTime_' + quizId);
 
@@ -229,6 +207,34 @@ async function submitQuiz() {
             totalPoints: quizData.settings.pointsPerItem * quizData.questions.length, submittedAt: serverTimestamp()
         });
     } catch (error) { console.error("Error submitting results: ", error); }
+    
+    const reviewContainer = document.getElementById('answer-review-container');
+    let reviewHTML = '';
+
+    quizData.questions.forEach((q, index) => {
+        const studentAnswerIndex = studentAnswers[index];
+        const correctAnswerIndex = q.answer;
+        const isCorrect = studentAnswerIndex === correctAnswerIndex;
+        const studentAnswerText = (studentAnswerIndex !== null) ? q.options[studentAnswerIndex] : 'No Answer';
+        const correctAnswerText = q.options[correctAnswerIndex];
+
+        reviewHTML += `
+            <div class="review-item ${isCorrect ? 'correct' : 'incorrect'}">
+                <p class="fw-bold mb-2">Q${index + 1}: ${q.question}</p>
+                <div class="your-answer text-${isCorrect ? 'success' : 'danger'}">
+                    <i class="ri-${isCorrect ? 'check-line' : 'close-line'}"></i>
+                    <span>Your Answer: ${studentAnswerText}</span>
+                </div>
+                ${!isCorrect ? `
+                <div class="correct-answer text-success mt-2">
+                    <i class="ri-check-double-line"></i>
+                    <span>Correct Answer: ${correctAnswerText}</span>
+                </div>` : ''}
+            </div>
+        `;
+    });
+
+    reviewContainer.innerHTML = reviewHTML;
     
     quizProper.style.display = 'none';
     resultsScreen.style.display = 'block';
